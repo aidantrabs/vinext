@@ -321,6 +321,12 @@ export function createSSRHandler(
     return runWithRequestContext(requestContext, async () => {
       ensureFetchPatch();
       try {
+        // Register ALS-backed accessors in the SSR module graph so
+        // head and router state are per-request isolated under
+        // concurrent load.
+        await server.ssrLoadModule("vinext/head-state");
+        await server.ssrLoadModule("vinext/router-state");
+
         // Set SSR context for the router shim so useRouter() returns
         // the correct URL and params during server-side rendering.
         const routerShim = await server.ssrLoadModule("next/router");
