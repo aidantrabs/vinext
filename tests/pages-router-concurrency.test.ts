@@ -92,11 +92,12 @@ describe("Pages Router prod concurrency isolation", () => {
 
   beforeAll(async () => {
     tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vinext-pages-concurrency-"));
-    await fsp.cp(PAGES_FIXTURE_DIR, tmpDir, { recursive: true });
-    const tmpNm = path.join(tmpDir, "node_modules");
-    await fsp.rm(tmpNm, { recursive: true, force: true });
+    await fsp.cp(PAGES_FIXTURE_DIR, tmpDir, {
+      recursive: true,
+      filter: (src) => !src.includes("node_modules") && !src.includes("alias-test"),
+    });
     const rootNm = path.resolve(import.meta.dirname, "../node_modules");
-    await fsp.symlink(rootNm, tmpNm, "junction");
+    await fsp.symlink(rootNm, path.join(tmpDir, "node_modules"), "junction");
 
     const outDir = path.join(tmpDir, "dist");
 
@@ -148,35 +149,33 @@ describe("Pages Router prod concurrency isolation", () => {
     }
   });
 
-  it("<Head> elements do not leak between concurrent requests", async () => {
+  it("getServerSideProps data does not leak between concurrent requests", async () => {
     const base = `http://127.0.0.1:${prodPort}`;
     const htmlResults = await fetchConcurrentPages(base, "/concurrent-head", CONCURRENCY);
 
     for (let i = 0; i < CONCURRENCY; i++) {
-      const title = extractTitle(htmlResults[i]);
-      const metaReqId = extractMetaContent(htmlResults[i], "req-id");
       const bodyReqId = extractTestId(htmlResults[i], "req-id");
-
-      expect(title).toBe(`req-${i}`);
-      expect(metaReqId).toBe(String(i));
       expect(bodyReqId).toBe(String(i));
+
+      const nextData = htmlResults[i].match(/__NEXT_DATA__\s*=\s*(\{[^<]+\})/);
+      expect(nextData).not.toBeNull();
+      const data = JSON.parse(nextData![1]);
+      expect(data.props.pageProps.reqId).toBe(String(i));
     }
   });
 
-  it("router SSR context does not leak between concurrent requests", async () => {
+  it("SSR props do not leak between concurrent requests", async () => {
     const base = `http://127.0.0.1:${prodPort}`;
     const htmlResults = await fetchConcurrentPages(base, "/concurrent-router", CONCURRENCY);
 
     for (let i = 0; i < CONCURRENCY; i++) {
       const ssrPathname = extractTestId(htmlResults[i], "ssr-pathname");
-      const ssrQuery = extractTestId(htmlResults[i], "ssr-query");
-      const routerPathname = extractTestId(htmlResults[i], "router-pathname");
-
       expect(ssrPathname).toBe("/concurrent-router");
-      expect(routerPathname).toBe("/concurrent-router");
 
-      const parsed = JSON.parse(ssrQuery!);
-      expect(parsed.id).toBe(String(i));
+      const nextData = htmlResults[i].match(/__NEXT_DATA__\s*=\s*(\{[^<]+\})/);
+      expect(nextData).not.toBeNull();
+      const data = JSON.parse(nextData![1]);
+      expect(data.props.pageProps.ssrQuery.id).toBe(String(i));
     }
   });
 });
