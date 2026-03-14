@@ -12,7 +12,8 @@ between concurrent requests.
 ### 1. unified request context (per-request)
 
 one `AsyncLocalStorage<UnifiedRequestContext>` holds all per-request state in
-a flat object. this replaced the 5-6 nested als scopes from before pr #450.
+a flat object. pr #450 introduced this to replace the 5-6 nested als scopes
+that existed before.
 
 **file:** `unified-request-context.ts`
 
