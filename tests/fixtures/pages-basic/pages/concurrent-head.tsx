@@ -17,6 +17,7 @@ export default function ConcurrentHeadPage({ reqId }: Props) {
 }
 
 export async function getServerSideProps(context: { query: { id?: string } }) {
+  await new Promise((r) => setTimeout(r, Math.random() * 10));
   return {
     props: {
       reqId: context.query.id ?? "unknown",

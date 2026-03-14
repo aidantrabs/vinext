@@ -21,6 +21,7 @@ export async function getServerSideProps(context: {
   resolvedUrl: string;
   query: Record<string, string | string[]>;
 }) {
+  await new Promise((r) => setTimeout(r, Math.random() * 10));
   return {
     props: {
       ssrPathname: context.resolvedUrl.split("?")[0],
