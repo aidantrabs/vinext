@@ -61,9 +61,9 @@ describe("Pages Router dev concurrency isolation", () => {
       const metaReqId = extractMetaContent(htmlResults[i], "req-id");
       const bodyReqId = extractTestId(htmlResults[i], "req-id");
 
-      expect(bodyReqId).toBe(String(i));
-      expect(title).toBe(`req-${bodyReqId}`);
-      expect(metaReqId).toBe(bodyReqId);
+      expect(bodyReqId, `response ${i} should contain its own req-id`).toBe(String(i));
+      expect(title, `response ${i} should have its own <title>`).toBe(`req-${bodyReqId}`);
+      expect(metaReqId, `response ${i} meta req-id should match body`).toBe(bodyReqId);
     }
   });
 
@@ -74,13 +74,13 @@ describe("Pages Router dev concurrency isolation", () => {
       const ssrPathname = extractTestId(htmlResults[i], "ssr-pathname");
       const routerPathname = extractTestId(htmlResults[i], "router-pathname");
 
-      expect(ssrPathname).toBe("/concurrent-router");
-      expect(routerPathname).toBe("/concurrent-router");
+      expect(ssrPathname, `response ${i} ssr-pathname`).toBe("/concurrent-router");
+      expect(routerPathname, `response ${i} router-pathname`).toBe("/concurrent-router");
 
       const nextData = htmlResults[i].match(/__NEXT_DATA__\s*=\s*(\{[^<]+\})/);
-      expect(nextData).not.toBeNull();
-      const data = JSON.parse(nextData![1]);
-      expect(data.props.pageProps.ssrQuery.id).toBe(String(i));
+      if (!nextData) throw new Error(`no __NEXT_DATA__ found in response ${i}`);
+      const data = JSON.parse(nextData[1]);
+      expect(data.props.pageProps.ssrQuery.id, `response ${i} ssrQuery.id`).toBe(String(i));
     }
   });
 });
@@ -155,12 +155,12 @@ describe("Pages Router prod concurrency isolation", () => {
 
     for (let i = 0; i < CONCURRENCY; i++) {
       const bodyReqId = extractTestId(htmlResults[i], "req-id");
-      expect(bodyReqId).toBe(String(i));
+      expect(bodyReqId, `response ${i} should contain its own req-id`).toBe(String(i));
 
       const nextData = htmlResults[i].match(/__NEXT_DATA__\s*=\s*(\{[^<]+\})/);
-      expect(nextData).not.toBeNull();
-      const data = JSON.parse(nextData![1]);
-      expect(data.props.pageProps.reqId).toBe(String(i));
+      if (!nextData) throw new Error(`no __NEXT_DATA__ found in response ${i}`);
+      const data = JSON.parse(nextData[1]);
+      expect(data.props.pageProps.reqId, `response ${i} pageProps.reqId`).toBe(String(i));
     }
   });
 
@@ -170,12 +170,12 @@ describe("Pages Router prod concurrency isolation", () => {
 
     for (let i = 0; i < CONCURRENCY; i++) {
       const ssrPathname = extractTestId(htmlResults[i], "ssr-pathname");
-      expect(ssrPathname).toBe("/concurrent-router");
+      expect(ssrPathname, `response ${i} ssr-pathname`).toBe("/concurrent-router");
 
       const nextData = htmlResults[i].match(/__NEXT_DATA__\s*=\s*(\{[^<]+\})/);
-      expect(nextData).not.toBeNull();
-      const data = JSON.parse(nextData![1]);
-      expect(data.props.pageProps.ssrQuery.id).toBe(String(i));
+      if (!nextData) throw new Error(`no __NEXT_DATA__ found in response ${i}`);
+      const data = JSON.parse(nextData[1]);
+      expect(data.props.pageProps.ssrQuery.id, `response ${i} ssrQuery.id`).toBe(String(i));
     }
   });
 });
