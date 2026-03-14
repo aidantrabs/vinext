@@ -149,6 +149,8 @@ describe("Pages Router prod concurrency isolation", () => {
     }
   });
 
+  // prod does not inject <Head> children into the html <head> section, so we
+  // can only verify getServerSideProps data isolation here (not title/meta).
   it("getServerSideProps data does not leak between concurrent requests", async () => {
     const base = `http://127.0.0.1:${prodPort}`;
     const htmlResults = await fetchConcurrentPages(base, "/concurrent-head", CONCURRENCY);
