@@ -250,6 +250,15 @@ export function createSSRHandler(
   trailingSlash = false,
 ) {
   const matcher = fileMatcher ?? createValidFileMatcher();
+
+  // Register ALS-backed accessors in the SSR module graph so head and
+  // router state are per-request isolated under concurrent load.
+  // This is a one-time side-effect; ssrLoadModule caches internally.
+  const _alsRegistration = Promise.all([
+    server.ssrLoadModule("vinext/head-state"),
+    server.ssrLoadModule("vinext/router-state"),
+  ]);
+
   return async (
     req: IncomingMessage,
     res: ServerResponse,
@@ -321,11 +330,7 @@ export function createSSRHandler(
     return runWithRequestContext(requestContext, async () => {
       ensureFetchPatch();
       try {
-        // Register ALS-backed accessors in the SSR module graph so
-        // head and router state are per-request isolated under
-        // concurrent load.
-        await server.ssrLoadModule("vinext/head-state");
-        await server.ssrLoadModule("vinext/router-state");
+        await _alsRegistration;
 
         // Set SSR context for the router shim so useRouter() returns
         // the correct URL and params during server-side rendering.
