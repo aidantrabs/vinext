@@ -35,7 +35,7 @@ function extractTitle(html: string): string | null {
 }
 
 function extractMetaContent(html: string, name: string): string | null {
-  const pattern = new RegExp(`<meta[^>]+name="${name}"[^>]+content="([^"]*)"`, "i");
+  const pattern = new RegExp(`<meta(?=[^>]*name="${name}")[^>]+content="([^"]*)"`, "i");
   const match = html.match(pattern);
 
   return match?.[1] ?? null;
