@@ -19,7 +19,7 @@ export default function ConcurrentRouterPage({ ssrPathname, ssrQuery }: Props) {
 
 export async function getServerSideProps(context: {
   resolvedUrl: string;
-  query: Record<string, string | string[]>;
+  query: Record<string, string | string[] | undefined>;
 }) {
   await new Promise((r) => setTimeout(r, Math.random() * 10));
   return {
