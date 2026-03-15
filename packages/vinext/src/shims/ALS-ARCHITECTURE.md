@@ -91,7 +91,8 @@ happens naturally through static imports.
 3. set a default in `createRequestContext()`
 4. in your shim, use `isInsideUnifiedScope()` to read from the unified store,
    falling back to standalone als when outside
-5. if the state needs to work across vite environments in dev, load the state
-   module via `server.ssrLoadModule()` in `dev-server.ts`
+5. if the state is accessed by react components during ssr in dev, load the
+   state module via `server.ssrLoadModule()` in `dev-server.ts` (node-side-only
+   state does not need this)
 6. if the state is per-call rather than per-request (like cache scopes), keep
    it in its own als - don't add it to the unified context
