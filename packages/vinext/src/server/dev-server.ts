@@ -979,7 +979,7 @@ hydrate();
         }
       } catch (e) {
         // Let Vite fix the stack trace for better dev experience
-        server.ssrFixStacktrace(e as Error);
+        server.ssrFixStacktrace?.(e as Error);
         console.error(e);
         // Report error via instrumentation hook if registered
         reportRequestError(
