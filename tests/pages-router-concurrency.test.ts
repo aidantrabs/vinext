@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { build, type ViteDevServer } from "vite";
 import path from "node:path";
-import os from "node:os";
-import fsp from "node:fs/promises";
 import http from "node:http";
 import vinext from "../packages/vinext/src/index.js";
-import { PAGES_FIXTURE_DIR, startFixtureServer } from "./helpers.js";
+import { createIsolatedFixture, PAGES_FIXTURE_DIR, startFixtureServer } from "./helpers.js";
 
 const CONCURRENCY = 15;
 
@@ -91,13 +89,11 @@ describe("Pages Router prod concurrency isolation", () => {
   let tmpDir: string;
 
   beforeAll(async () => {
-    tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "vinext-pages-concurrency-"));
-    await fsp.cp(PAGES_FIXTURE_DIR, tmpDir, {
-      recursive: true,
-      filter: (src) => !src.includes("node_modules") && !src.includes("alias-test"),
-    });
-    const rootNm = path.resolve(import.meta.dirname, "../node_modules");
-    await fsp.symlink(rootNm, path.join(tmpDir, "node_modules"), "junction");
+    tmpDir = await createIsolatedFixture(
+      PAGES_FIXTURE_DIR,
+      "vinext-pages-concurrency-",
+      (src) => !src.includes("node_modules") && !src.includes("alias-test"),
+    );
 
     const outDir = path.join(tmpDir, "dist");
 
@@ -145,6 +141,7 @@ describe("Pages Router prod concurrency isolation", () => {
       await new Promise<void>((resolve) => prodServer.close(() => resolve()));
     }
     if (tmpDir) {
+      const fsp = await import("node:fs/promises");
       await fsp.rm(tmpDir, { recursive: true, force: true });
     }
   });
