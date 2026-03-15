@@ -258,6 +258,10 @@ export function createSSRHandler(
     server.ssrLoadModule("vinext/head-state"),
     server.ssrLoadModule("vinext/router-state"),
   ]);
+  // Suppress unhandled-rejection if the server closes before the first
+  // request (common in tests). Errors still propagate when the first
+  // request handler awaits _alsRegistration.
+  _alsRegistration.catch(() => {});
 
   return async (
     req: IncomingMessage,
